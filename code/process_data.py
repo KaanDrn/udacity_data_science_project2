@@ -32,7 +32,8 @@ data_categories = data_categories.iloc[:5000, :]
 
 # clean categories
 print('preparing labels')
-data_categories = data_tools.prepare_labels(data_categories)
+data_obj = data_tools.LabelPreparation(data_categories)
+data_obj.prepare_labels()
 
 print('preparing texts')
 texts_obj = data_tools.TextPreparation(data_texts)

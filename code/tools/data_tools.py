@@ -3,9 +3,9 @@ import re
 import nltk
 import pandas as pd
 from nltk.corpus import stopwords
+from nltk.stem.wordnet import WordNetLemmatizer
 
 
-# Labels
 class LabelPreparation:
     def __init__(self, label_data):
         self.label_data = label_data
@@ -59,7 +59,8 @@ class LabelPreparation:
         return self.label_data.astype(int)
 
 
-# NLP Preparation
+# TODO: Implemetned this class on my way through the videos and realized that the
+#  TF-IDF Vectorizer can do all this as well... so this deprecated before I needed it.
 class TextPreparation:
     def __init__(self, text_data):
         self.data = text_data
@@ -72,18 +73,30 @@ class TextPreparation:
     def prepare_data(self):
         self.normalize_me()
         self.tokenize_me()
-        self.remove_stopwords()
+        self.remove_my_stopwords()
+        self.lemmatize_me()
 
     def normalize_me(self):
         self.data.message = self.data.message.apply(str.lower)
-        self.data.message = self.data.message.apply(self.clean_punctuation)
+        self.data.message = self.data.message.apply(self._clean_punctuation)
 
     @staticmethod
-    def clean_punctuation(text):
+    def _clean_punctuation(text):
         return re.sub(r"[^a-zA-Z0-9]", " ", text)
 
     def tokenize_me(self):
         self.data.message = self.data.message.apply(nltk.tokenize.word_tokenize)
 
-    def remove_stopwords(self):
-        return [w for w in self.data.message if w not in stopwords.words("english")]
+    def remove_my_stopwords(self):
+        self.data.message = self.data.message.apply(self._remove_stopwords)
+
+    @staticmethod
+    def _remove_stopwords(text):
+        return [w for w in text if w not in stopwords.words("english")]
+
+    def lemmatize_me(self):
+        self.data.message = self.data.message.apply(self._lemmatize_text)
+
+    @staticmethod
+    def _lemmatize_text(text):
+        return [WordNetLemmatizer().lemmatize(w) for w in text]

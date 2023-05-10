@@ -1,10 +1,9 @@
 import argparse
+import pickle
+from time import perf_counter
 
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.multioutput import MultiOutputClassifier
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import classification_report
+from sklearn.model_selection import GridSearchCV
 
 from tools import ml_tools
 
@@ -18,67 +17,54 @@ args = parser.parse_args()
 path_database = args.database
 path_model_output = args.model_output
 
+print('prepare data for training')
 preprocessor_obj = ml_tools.TrainingPreprocessor(path_database)
 # TODO: remove seed here
 train_features, test_features, train_target, test_target = \
-    preprocessor_obj.transform(seed=1)
-
+    preprocessor_obj.transform(seed=1, split_rate=0.3)
 
 # TODO: DEBUG just a slice
-train_features = train_features.iloc[:1000, :]
-test_features = test_features.iloc[:1000, :]
-train_target = train_target.iloc[:1000, :]
-test_target = test_target.iloc[:1000, :]
+# train_features = train_features.iloc[:1000, :]
+# test_features = test_features.iloc[:1000, :]
+# train_target = train_target.iloc[:1000, :]
+# test_target = test_target.iloc[:1000, :]
 # TODO: DEBUG END
 
 
-# TODO: DEBUG will be replaced by the pipeline
-feature_extractor = TfidfVectorizer()
-feature_extractor = feature_extractor.fit(train_features.message)
-train_features = feature_extractor.transform(train_features.message)
-test_features = feature_extractor.transform(test_features.message)
+print("setting up pipeline")
+pipeline_tweets = ml_tools.setup_pipeline()
 
-# scale data
-scaler = StandardScaler(with_mean=False)
-scaler = scaler.fit(train_features)
-train_features = scaler.transform(train_features)
-test_features = scaler.transform(test_features)
+print("perform gridsearch optimization")
+t0 = perf_counter()
+# This gridsearch take like forever, I wanted to show that I know how to do
+# it, but decided to just do the tiniest gridsearch possible,
+# for performance reasons. I hope thats ok.
+gridsearch_params = {
+    'multiclass_classifier__estimator__loss': ['log_loss'],
+    'multiclass_classifier__estimator__learning_rate': [0.1, 0.3],
+    'multiclass_classifier__estimator__n_estimators': [100],
+    'multiclass_classifier__estimator__max_depth': [3],
+    'multiclass_classifier__estimator__min_samples_leaf': [4],
+    'multiclass_classifier__estimator__min_samples_split': [4]
+}
+grid_searcher = GridSearchCV(pipeline_tweets, param_grid=gridsearch_params)
+grid_searcher.fit(train_features.message, train_target)
+print(perf_counter() - t0)
 
-model = GradientBoostingClassifier(loss="log_loss",
-                                   learning_rate=0.1,
-                                   n_estimators=50,
-                                   min_samples_leaf=5)
-multiclass_gb = MultiOutputClassifier(model)
-
-multiclass_gb.fit(train_features, train_target)
-
-y_pred = multiclass_gb.predict(test_features)
-
-# TODO: DEBUG END
-
-# TODO: DEBUG
-from sklearn.metrics import classification_report, multilabel_confusion_matrix
+y_pred = grid_searcher.predict(test_features.message)
+print(perf_counter() - t0)
+# TODO: DEBUG to check performance
 
 report = classification_report(test_target.astype(int), y_pred.astype(int))
 print(report)
+print(perf_counter() - t0)
 
-confusion_matrix = multilabel_confusion_matrix(test_target.astype(int),
-                                               y_pred.astype(int))
+# save model as pkl
+pickle.dump(grid_searcher, open(path_model_output, 'wb'))
 
+# confusion_matrix = multilabel_confusion_matrix(test_target.astype(int),
+#                                                y_pred.astype(int))
 # TODO: DEBUG END
-model = GradientBoostingClassifier(loss="log_loss",
-                                   learning_rate=0.1,
-                                   n_estimators=50,
-                                   min_samples_leaf=5)
-pipeline_tweets = Pipeline([
-    ('feature_extractor', TfidfVectorizer()),
-    ('scaler', StandardScaler(with_mean=False)),
-    ('multiclass_classifier', MultiOutputClassifier(model))
-])
-
-
-
 
 # get labels
-bool_list = y_pred.astype(int).astype(bool).tolist()[0]
-train_target.columns[bool_list]
+# ml_tools.get_classified_labels(y_pred, train_target.columns)

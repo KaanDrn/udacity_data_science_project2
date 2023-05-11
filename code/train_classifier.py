@@ -19,17 +19,9 @@ path_model_output = args.model_output
 
 print('prepare data for training')
 preprocessor_obj = ml_tools.TrainingPreprocessor(path_database)
-# TODO: remove seed here
+
 train_features, test_features, train_target, test_target = \
-    preprocessor_obj.transform(seed=1, split_rate=0.3)
-
-# TODO: DEBUG just a slice
-# train_features = train_features.iloc[:1000, :]
-# test_features = test_features.iloc[:1000, :]
-# train_target = train_target.iloc[:1000, :]
-# test_target = test_target.iloc[:1000, :]
-# TODO: DEBUG END
-
+    preprocessor_obj.transform(split_rate=0.7)
 
 print("setting up pipeline")
 pipeline_tweets = ml_tools.setup_pipeline()
@@ -37,34 +29,31 @@ pipeline_tweets = ml_tools.setup_pipeline()
 print("perform gridsearch optimization")
 t0 = perf_counter()
 # This gridsearch take like forever, I wanted to show that I know how to do
-# it, but decided to just do the tiniest gridsearch possible,
-# for performance reasons. I hope thats ok.
+# it, but decided to just do a smaller gridsearch. I hope thats ok.
 gridsearch_params = {
-    'multiclass_classifier__estimator__loss': ['log_loss'],
-    'multiclass_classifier__estimator__learning_rate': [0.1, 0.3],
-    'multiclass_classifier__estimator__n_estimators': [100],
-    'multiclass_classifier__estimator__max_depth': [3],
-    'multiclass_classifier__estimator__min_samples_leaf': [4],
-    'multiclass_classifier__estimator__min_samples_split': [4]
+    'multiclass_classifier__estimator__learning_rate': [0.1, 0.2],
+    'multiclass_classifier__estimator__n_estimators': [200],
+    'multiclass_classifier__estimator__max_depth': [3, 5],
+    'multiclass_classifier__estimator__min_samples_leaf': [2],
+    'multiclass_classifier__estimator__min_samples_split': [2]
 }
-grid_searcher = GridSearchCV(pipeline_tweets, param_grid=gridsearch_params)
-grid_searcher.fit(train_features.message, train_target)
+grid_searcher = GridSearchCV(pipeline_tweets, param_grid=gridsearch_params, verbose=3, n_jobs=-1)
+
+from joblib import parallel_backend
+with parallel_backend('threading', n_jobs=-1):
+    (grid_searcher.fit(train_features.message, train_target))
+
 print(perf_counter() - t0)
 
 y_pred = grid_searcher.predict(test_features.message)
 print(perf_counter() - t0)
-# TODO: DEBUG to check performance
 
 report = classification_report(test_target.astype(int), y_pred.astype(int))
+print('model performance on test-set:')
 print(report)
 print(perf_counter() - t0)
 
-# save model as pkl
+print('save model as pkl')
 pickle.dump(grid_searcher, open(path_model_output, 'wb'))
 
-# confusion_matrix = multilabel_confusion_matrix(test_target.astype(int),
-#                                                y_pred.astype(int))
-# TODO: DEBUG END
-
-# get labels
-# ml_tools.get_classified_labels(y_pred, train_target.columns)
+print('saved model')

@@ -50,7 +50,7 @@ class TrainingPreprocessor:
 
 def setup_pipeline():
     pipeline = Pipeline([
-        ('feature_extractor', TfidfVectorizer(max_features=10**4)),
+        ('feature_extractor', TfidfVectorizer(max_features=2*10**4)),
         ('scaler', StandardScaler(with_mean=False)),
         ('multiclass_classifier',
          MultiOutputClassifier(GradientBoostingClassifier()))

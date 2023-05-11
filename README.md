@@ -15,6 +15,8 @@ The analysis makes use of the most known python libraries, namely:
 - `numpy`
 - `plotly`
 - `sqlite3`
+
+
 The following ML libraries were used:
 - `sklearn`
 - `nltk`
@@ -34,7 +36,7 @@ The data used in this analysis can be found in the `./resources` directory. The 
 The code used to launch the flask-app can be found in `./app`, where all the resources can be found to launch the app.
 
 # Usage
-## preprocessing data
+## Preprocessing data
 If new data is provided and the data base has to be cleaned and preprocessed, the `process_data.py` function can be used. Do do so, you can start the script from the cosole using the following code:
 ```cmd
 python process_data.py <path_to_raw_text_data.csv> <path_to_categories_data.csv> <path_to_sql_database_to_write_to.db>
@@ -44,14 +46,14 @@ If you execute the code in the resource folder, thios is what the call looks lik
 python process_data.py ../resources/messages.csv ../resources/categories.csv ../resources/DisasterResponse.db
 ```
 
-## training the model
+## Training the model
 After the data is pre-processed, the model can be trained using the `train_classifier.py` script, which is used like this:
 ```cmd
 python train_classifier.py ../resources/DisasterResponse.db ../resources/tweet_classifier.skops
 ```
 Please note that the model outputs a `.skops` file, which is a more robust format of a `.pkl` file. If you prefere `pickle` instead, you can modifie the `line 60` in `train_calssifier.py` to change the output format.
 
-## running the app
+## Running the app
 To run the app and makle use of the model you can simply type in
 ```cmd
 python run.py
@@ -62,4 +64,4 @@ Make sure that you are in the folder, where the `run.py` file is and make sure t
 The model optimizing is not as good as it could be since it takes quite a time to train the model, therefore the model performance is not the best. If you want to use this please take that into account or retrain the model.
 
 # Acknowledgments
-Thanks to Udacity for providing the most past of the flask app.
+Thanks to Udacity for providing the most part of the flask app.

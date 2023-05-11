@@ -5,6 +5,7 @@ import plotly
 from flask import Flask
 from flask import render_template, request
 from plotly.graph_objs import Bar
+import skops.io as sio
 
 from tools import ml_tools
 
@@ -18,8 +19,9 @@ data_obj.connection.close()
 df = data_obj.data
 
 # load model
-with open("../resources/tweet_classifier.pkl", "rb") as file:
-    model = pickle.load(file=file)
+# with open("../resources/tweet_classifier.pkl", "rb") as file:
+#     model = pickle.load(file=file)
+model = sio.load("../resources/tweet_classifier.skops", trusted=True)
 
 
 # index webpage displays cool visuals and receives user input text for model

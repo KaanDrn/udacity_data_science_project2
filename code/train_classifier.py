@@ -1,11 +1,14 @@
 import argparse
 import pickle
+import skops.io as sio
 from time import perf_counter
 
 from sklearn.metrics import classification_report
 from sklearn.model_selection import GridSearchCV
 
 from tools import ml_tools
+
+from joblib import parallel_backend
 
 parser = argparse.ArgumentParser()
 
@@ -30,16 +33,17 @@ print("perform gridsearch optimization")
 t0 = perf_counter()
 # This gridsearch take like forever, I wanted to show that I know how to do
 # it, but decided to just do a smaller gridsearch. I hope thats ok.
+# I trained the model in databricks and let this here, so you can see
+# on which parameters I did the gridsearch.
 gridsearch_params = {
-    'multiclass_classifier__estimator__learning_rate': [0.1, 0.2],
+    'multiclass_classifier__estimator__learning_rate': [0.2, 0.3],
     'multiclass_classifier__estimator__n_estimators': [200],
-    'multiclass_classifier__estimator__max_depth': [3, 5],
+    'multiclass_classifier__estimator__max_depth': [5],
     'multiclass_classifier__estimator__min_samples_leaf': [2],
     'multiclass_classifier__estimator__min_samples_split': [2]
 }
-grid_searcher = GridSearchCV(pipeline_tweets, param_grid=gridsearch_params, verbose=3, n_jobs=-1)
+grid_searcher = GridSearchCV(pipeline_tweets, param_grid=gridsearch_params,verbose=3, n_jobs=-1)
 
-from joblib import parallel_backend
 with parallel_backend('threading', n_jobs=-1):
     (grid_searcher.fit(train_features.message, train_target))
 
@@ -53,7 +57,7 @@ print('model performance on test-set:')
 print(report)
 print(perf_counter() - t0)
 
-print('save model as pkl')
-pickle.dump(grid_searcher, open(path_model_output, 'wb'))
+print('save model as skops')
+sio.dump(grid_searcher, open(path_model_output, 'wb'))
 
 print('saved model')

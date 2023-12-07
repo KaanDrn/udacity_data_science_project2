@@ -34,9 +34,9 @@ t0 = perf_counter()
 # I trained the model in databricks and let this here, so you can see
 # on which parameters I trained the model.
 gridsearch_params = {
-    'multiclass_classifier__estimator__learning_rate': [0.2],
-    'multiclass_classifier__estimator__n_estimators': [50],
-    'multiclass_classifier__estimator__max_depth': [5],
+    'multiclass_classifier__estimator__learning_rate': [0.2, 0.3],
+    'multiclass_classifier__estimator__n_estimators': [50, 100],
+    'multiclass_classifier__estimator__max_depth': [3, 5, 7],
     'multiclass_classifier__estimator__min_samples_leaf': [2],
     'multiclass_classifier__estimator__min_samples_split': [2]
 }

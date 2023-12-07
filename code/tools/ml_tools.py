@@ -65,7 +65,7 @@ def get_classified_labels(y_pred, label_names):
 
 # Unnecessary... I could also just use the TF-IDF Vectorizer as the
 #  estimator istead of creating my own. The estimator does not have any
-#  specialties compared to the TF-IDF Vectorizer provided by sklearn. BUt
+#  specialties compared to the TF-IDF Vectorizer provided by sklearn. But
 #  this is the way to create a homemade estimator, right?
 class FeatureExtractor(BaseEstimator):
     def __init__(self, corpus, feature_extractor=TfidfVectorizer):

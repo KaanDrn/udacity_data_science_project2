@@ -1,26 +1,37 @@
 import json
-import pickle
-
 import plotly
-from flask import Flask
-from flask import render_template, request
-from plotly.graph_objs import Bar
-import skops.io as sio
+import pandas as pd
 
-from tools import ml_tools
+from nltk.stem import WordNetLemmatizer
+from nltk.tokenize import word_tokenize
+
+from flask import Flask
+from flask import render_template, request, jsonify
+from plotly.graph_objs import Bar
+import sqlite3
+import skops.io as sio
 
 app = Flask(__name__)
 
+
+def tokenize(text):
+    tokens = word_tokenize(text)
+    lemmatizer = WordNetLemmatizer()
+
+    clean_tokens = []
+    for tok in tokens:
+        clean_tok = lemmatizer.lemmatize(tok).lower().strip()
+        clean_tokens.append(clean_tok)
+
+    return clean_tokens
+
+
 # load data
-data_obj = ml_tools.TrainingPreprocessor("../resources/DisasterResponse.db")
-data_obj.connect_to_db()
-data_obj.load_data()
-data_obj.connection.close()
-df = data_obj.data
+connection = sqlite3.connect('../resources/DisasterResponse.db')
+df = pd.read_sql('SELECT * FROM disaster_data', connection)
+connection.close()
 
 # load model
-# with open("../resources/tweet_classifier.pkl", "rb") as file:
-#     model = pickle.load(file=file)
 model = sio.load("../resources/tweet_classifier.skops", trusted=True)
 
 
@@ -32,6 +43,10 @@ def index():
     # TODO: Below is an example - modify to extract data for your own visuals
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
+
+    category_counts = df.iloc[:, 4:-2].astype(int).sum(axis=0)
+    category_names = list(category_counts.index)
+    category_counts = category_counts.values
 
     # create visuals
     # TODO: Below is an example - modify to create your own visuals
@@ -51,6 +66,24 @@ def index():
                 },
                 'xaxis': {
                     'title': "Genre"
+                }
+            }
+        },
+        {
+            'data': [
+                Bar(
+                        x=category_names,
+                        y=category_counts
+                )
+            ],
+
+            'layout': {
+                'title': 'Number of requests per category',
+                'yaxis': {
+                    'title': "Count"
+                },
+                'xaxis': {
+                    'title': "requests"
                 }
             }
         }
@@ -83,7 +116,7 @@ def go():
 
 
 def main():
-    app.run(host='0.0.0.0', port=3000, debug=True)
+    app.run(host='0.0.0.0', port=3001, debug=True)
 
 
 if __name__ == '__main__':
